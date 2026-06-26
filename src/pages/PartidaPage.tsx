@@ -13,6 +13,7 @@ interface PartidaPageProps {
   pontosTemporariosAzul: number | null;
   pontosTemporariosVerde: number | null;
   onLancarPontos: (time: 'azul' | 'verde', pontos: number) => void;
+  onConfirmarRodada: () => void;
   onDesfazer: () => void;
   onReiniciar: () => void;
   onLimparPontos: (time: 'azul' | 'verde') => void;
@@ -29,6 +30,7 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
   pontosTemporariosAzul,
   pontosTemporariosVerde,
   onLancarPontos,
+  onConfirmarRodada,
   onDesfazer,
   onReiniciar,
   onLimparPontos,
@@ -49,6 +51,7 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
   const limiteVulnerabilidade = pontosVulnerabilidade || 1500;
   const azulVulneravel = timeAzul.pontuacaoTotal >= limiteVulnerabilidade;
   const verdeVulneravel = timeVerde.pontuacaoTotal >= limiteVulnerabilidade;
+  const temAmbosLancamentos = pontosTemporariosAzul !== null && pontosTemporariosVerde !== null;
 
   // Efeito para disparar animação de alteração do total do Time Azul
   useEffect(() => {
@@ -169,6 +172,15 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
               <td className="tfoot-metric">TOTAL ACUMULADO</td>
               <td className="tfoot-val azul-acc">{totalAzul} pts</td>
               <td className="tfoot-val verde-acc">{totalVerde} pts</td>
+            </tr>
+            <tr className="tfoot-row tfoot-diferenca">
+              <td className="tfoot-metric">DIFERENÇA ATUAL</td>
+              <td className="tfoot-val azul-acc" style={{ color: totalAzul > totalVerde ? '#60a5fa' : 'var(--text-muted)', fontWeight: totalAzul > totalVerde ? 800 : 'normal' }}>
+                {totalAzul > totalVerde ? `+${totalAzul - totalVerde} pts` : totalAzul === totalVerde ? '0 pts' : '-'}
+              </td>
+              <td className="tfoot-val verde-acc" style={{ color: totalVerde > totalAzul ? '#34d399' : 'var(--text-muted)', fontWeight: totalVerde > totalAzul ? 800 : 'normal' }}>
+                {totalVerde > totalAzul ? `+${totalVerde - totalAzul} pts` : totalAzul === totalVerde ? '0 pts' : '-'}
+              </td>
             </tr>
             <tr className="tfoot-row tfoot-vulnerabilidade">
               <td className="tfoot-metric">FALTA P/ VULNERAR (Meta: {limiteVulnerabilidade})</td>
@@ -293,23 +305,27 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
             </div>
 
             <div className="control-buttons">
-              <button 
-                type="button" 
-                className="btn btn-azul"
-                onClick={() => abrirModalPontuacao('azul')}
-                disabled={status === 'finalizado'}
-              >
-                <Plus size={18} /> Adicionar Pontos
-              </button>
-              
-              <button 
-                type="button" 
-                className="btn btn-azul-outline"
-                onClick={() => handleAtalhoMenos300('azul')}
-                disabled={status === 'finalizado'}
-              >
-                Atalho -300
-              </button>
+              {!temAmbosLancamentos && (
+                <>
+                  <button 
+                    type="button" 
+                    className="btn btn-azul"
+                    onClick={() => abrirModalPontuacao('azul')}
+                    disabled={status === 'finalizado'}
+                  >
+                    <Plus size={18} /> Adicionar Pontos
+                  </button>
+                  
+                  <button 
+                    type="button" 
+                    className="btn btn-azul-outline"
+                    onClick={() => handleAtalhoMenos300('azul')}
+                    disabled={status === 'finalizado'}
+                  >
+                    Atalho -300
+                  </button>
+                </>
+              )}
 
               {pontosTemporariosAzul !== null && (
                 <button
@@ -345,23 +361,27 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
             </div>
 
             <div className="control-buttons">
-              <button 
-                type="button" 
-                className="btn btn-verde"
-                onClick={() => abrirModalPontuacao('verde')}
-                disabled={status === 'finalizado'}
-              >
-                <Plus size={18} /> Adicionar Pontos
-              </button>
-              
-              <button 
-                type="button" 
-                className="btn btn-verde-outline"
-                onClick={() => handleAtalhoMenos300('verde')}
-                disabled={status === 'finalizado'}
-              >
-                Atalho -300
-              </button>
+              {!temAmbosLancamentos && (
+                <>
+                  <button 
+                    type="button" 
+                    className="btn btn-verde"
+                    onClick={() => abrirModalPontuacao('verde')}
+                    disabled={status === 'finalizado'}
+                  >
+                    <Plus size={18} /> Adicionar Pontos
+                  </button>
+                  
+                  <button 
+                    type="button" 
+                    className="btn btn-verde-outline"
+                    onClick={() => handleAtalhoMenos300('verde')}
+                    disabled={status === 'finalizado'}
+                  >
+                    Atalho -300
+                  </button>
+                </>
+              )}
 
               {pontosTemporariosVerde !== null && (
                 <button
@@ -378,6 +398,20 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* BOTÃO ÚNICO DE CONFIRMAÇÃO */}
+      {temAmbosLancamentos && (
+        <div className="confirm-round-section fade-in">
+          <button
+            type="button"
+            className="btn btn-primary confirm-round-btn"
+            onClick={onConfirmarRodada}
+            disabled={status === 'finalizado'}
+          >
+            Confirmar Lançamento
+          </button>
+        </div>
+      )}
 
       {/* HISTÓRICO / TABELA DE RODADAS */}
       <section className="glass-panel history-section">

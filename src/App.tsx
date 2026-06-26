@@ -101,85 +101,80 @@ function App() {
       pontosTemporariosVerde: null,
     });
   };
-
-  // Lançar pontuação de um time
+  // Lançar pontuação temporária de um time
   const lancarPontos = (time: 'azul' | 'verde', pontos: number) => {
     setEstado((prev) => {
-      // Se já finalizado, não faz nada
       if (prev.status === 'finalizado') return prev;
 
-      let novoTempAzul = prev.pontosTemporariosAzul;
-      let novoTempVerde = prev.pontosTemporariosVerde;
-
-      if (time === 'azul') {
-        novoTempAzul = pontos;
-      } else {
-        novoTempVerde = pontos;
-      }
-
-      // Se ambos pontuaram na rodada atual, fecha a rodada e avança
-      if (novoTempAzul !== null && novoTempVerde !== null) {
-        const acumuladoAzul = prev.timeAzul.pontuacaoTotal + novoTempAzul;
-        const acumuladoVerde = prev.timeVerde.pontuacaoTotal + novoTempVerde;
-
-        const novaRodada: Rodada = {
-          numero: prev.rodadas.length + 1,
-          pontosAzul: novoTempAzul,
-          pontosVerde: novoTempVerde,
-          acumuladoAzul,
-          acumuladoVerde,
-        };
-
-        const novasRodadas = [...prev.rodadas, novaRodada];
-        
-        // Verifica se alguém atingiu a meta de pontos
-        let status: 'jogando' | 'finalizado' = 'jogando';
-        let vencedor: 'azul' | 'verde' | null = null;
-
-        const azulAtingiu = acumuladoAzul >= prev.metaPontos;
-        const verdeAtingiu = acumuladoVerde >= prev.metaPontos;
-
-        if (azulAtingiu || verdeAtingiu) {
-          if (azulAtingiu && verdeAtingiu) {
-            // Em caso de empate acima da meta, ganha quem tiver mais pontos
-            if (acumuladoAzul > acumuladoVerde) {
-              vencedor = 'azul';
-              status = 'finalizado';
-            } else if (acumuladoVerde > acumuladoAzul) {
-              vencedor = 'verde';
-              status = 'finalizado';
-            }
-            // Se empatarem exatamente acima da meta, o jogo continua na próxima rodada
-          } else if (azulAtingiu) {
-            vencedor = 'azul';
-            status = 'finalizado';
-          } else {
-            vencedor = 'verde';
-            status = 'finalizado';
-          }
-        }
-
-        return {
-          ...prev,
-          timeAzul: { ...prev.timeAzul, pontuacaoTotal: acumuladoAzul },
-          timeVerde: { ...prev.timeVerde, pontuacaoTotal: acumuladoVerde },
-          rodadas: novasRodadas,
-          pontosTemporariosAzul: null,
-          pontosTemporariosVerde: null,
-          status,
-          vencedor,
-        };
-      }
-
-      // Caso apenas um time tenha pontuado, mantém no estado temporário
       return {
         ...prev,
-        pontosTemporariosAzul: novoTempAzul,
-        pontosTemporariosVerde: novoTempVerde,
+        pontosTemporariosAzul: time === 'azul' ? pontos : prev.pontosTemporariosAzul,
+        pontosTemporariosVerde: time === 'verde' ? pontos : prev.pontosTemporariosVerde,
       };
     });
   };
 
+  // Confirmar e computar a rodada finalizada
+  const confirmarRodada = () => {
+    setEstado((prev) => {
+      if (prev.status === 'finalizado') return prev;
+      if (prev.pontosTemporariosAzul === null || prev.pontosTemporariosVerde === null) return prev;
+
+      const novoTempAzul = prev.pontosTemporariosAzul;
+      const novoTempVerde = prev.pontosTemporariosVerde;
+
+      const acumuladoAzul = prev.timeAzul.pontuacaoTotal + novoTempAzul;
+      const acumuladoVerde = prev.timeVerde.pontuacaoTotal + novoTempVerde;
+
+      const novaRodada: Rodada = {
+        numero: prev.rodadas.length + 1,
+        pontosAzul: novoTempAzul,
+        pontosVerde: novoTempVerde,
+        acumuladoAzul,
+        acumuladoVerde,
+      };
+
+      const novasRodadas = [...prev.rodadas, novaRodada];
+      
+      // Verifica se alguém atingiu a meta de pontos
+      let status: 'jogando' | 'finalizado' = 'jogando';
+      let vencedor: 'azul' | 'verde' | null = null;
+
+      const azulAtingiu = acumuladoAzul >= prev.metaPontos;
+      const verdeAtingiu = acumuladoVerde >= prev.metaPontos;
+
+      if (azulAtingiu || verdeAtingiu) {
+        if (azulAtingiu && verdeAtingiu) {
+          // Em caso de empate acima da meta, ganha quem tiver mais pontos
+          if (acumuladoAzul > acumuladoVerde) {
+            vencedor = 'azul';
+            status = 'finalizado';
+          } else if (acumuladoVerde > acumuladoAzul) {
+            vencedor = 'verde';
+            status = 'finalizado';
+          }
+          // Se empatarem exatamente acima da meta, o jogo continua na próxima rodada
+        } else if (azulAtingiu) {
+          vencedor = 'azul';
+          status = 'finalizado';
+        } else {
+          vencedor = 'verde';
+          status = 'finalizado';
+        }
+      }
+
+      return {
+        ...prev,
+        timeAzul: { ...prev.timeAzul, pontuacaoTotal: acumuladoAzul },
+        timeVerde: { ...prev.timeVerde, pontuacaoTotal: acumuladoVerde },
+        rodadas: novasRodadas,
+        pontosTemporariosAzul: null,
+        pontosTemporariosVerde: null,
+        status,
+        vencedor,
+      };
+    });
+  };
   // Desfazer última ação (pode ser um lançamento temporário ou a última rodada completa)
   const desfazerUltimaAcao = () => {
     setEstado((prev) => {
@@ -260,6 +255,7 @@ function App() {
                 pontosTemporariosAzul={estado.pontosTemporariosAzul}
                 pontosTemporariosVerde={estado.pontosTemporariosVerde}
                 onLancarPontos={lancarPontos}
+                onConfirmarRodada={confirmarRodada}
                 onDesfazer={desfazerUltimaAcao}
                 onReiniciar={reiniciarPartida}
                 onLimparPontos={limparPontosTemporarios}

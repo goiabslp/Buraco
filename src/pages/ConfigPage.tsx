@@ -6,12 +6,13 @@ interface ConfigPageProps {
 }
 
 export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
+  // Configuração da quantidade de jogadores por equipe (Geral)
+  const [numJogadores, setNumJogadores] = useState<1 | 2>(2);
+  
   // Configuração Time Azul (Time 1)
-  const [numJogadoresAzul, setNumJogadoresAzul] = useState<1 | 2>(2);
   const [jogadoresAzul, setJogadoresAzul] = useState<string[]>(['', '']);
 
   // Configuração Time Verde (Time 2)
-  const [numJogadoresVerde, setNumJogadoresVerde] = useState<1 | 2>(2);
   const [jogadoresVerde, setJogadoresVerde] = useState<string[]>(['', '']);
 
   // Meta de pontos
@@ -19,16 +20,10 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
   // Vulnerabilidade
   const [vulnerabilidadePontos, setVulnerabilidadePontos] = useState<number>(1500);
 
-  const handleMudarNumJogadoresAzul = (num: 1 | 2) => {
-    setNumJogadoresAzul(num);
+  const handleMudarNumJogadores = (num: 1 | 2) => {
+    setNumJogadores(num);
     if (num === 1) {
       setJogadoresAzul([jogadoresAzul[0], '']);
-    }
-  };
-
-  const handleMudarNumJogadoresVerde = (num: 1 | 2) => {
-    setNumJogadoresVerde(num);
-    if (num === 1) {
       setJogadoresVerde([jogadoresVerde[0], '']);
     }
   };
@@ -49,11 +44,11 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
     e.preventDefault();
 
     // Filtra os jogadores válidos com base na quantidade selecionada e converte para UPPERCASE
-    const azulValidos = jogadoresAzul.slice(0, numJogadoresAzul).map(n => {
+    const azulValidos = jogadoresAzul.slice(0, numJogadores).map(n => {
       const nome = n.trim() || `Jogador ${jogadoresAzul.indexOf(n) + 1}`;
       return nome.toUpperCase();
     });
-    const verdeValidos = jogadoresVerde.slice(0, numJogadoresVerde).map(n => {
+    const verdeValidos = jogadoresVerde.slice(0, numJogadores).map(n => {
       const nome = n.trim() || `Jogador ${jogadoresVerde.indexOf(n) + 1}`;
       return nome.toUpperCase();
     });
@@ -100,6 +95,34 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
       </header>
 
       <form onSubmit={handleSubmit} className="config-form">
+        {/* SELETOR GERAL DE QUANTIDADE DE JOGADORES */}
+        <div className="glass-panel general-player-count-card">
+          <div className="settings-body">
+            <div>
+              <h2>Jogadores por Equipe</h2>
+              <p className="settings-desc">Selecione quantos jogadores terá cada equipe</p>
+            </div>
+            <div className="player-count-selector">
+              <div className="selector-buttons">
+                <button
+                  type="button"
+                  className={`selector-btn ${numJogadores === 1 ? 'active-geral' : ''}`}
+                  onClick={() => handleMudarNumJogadores(1)}
+                >
+                  1 Jogador
+                </button>
+                <button
+                  type="button"
+                  className={`selector-btn ${numJogadores === 2 ? 'active-geral' : ''}`}
+                  onClick={() => handleMudarNumJogadores(2)}
+                >
+                  2 Jogadores
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="teams-grid">
           {/* CARD TIME AZUL */}
           <div className="glass-panel team-setup-card setup-azul">
@@ -107,26 +130,6 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
             <div className="card-body">
               <div className="team-badge badge-azul">TIME AZUL</div>
               
-              <div className="player-count-selector">
-                <span className="selector-label">Jogadores:</span>
-                <div className="selector-buttons">
-                  <button
-                    type="button"
-                    className={`selector-btn ${numJogadoresAzul === 1 ? 'active-azul' : ''}`}
-                    onClick={() => handleMudarNumJogadoresAzul(1)}
-                  >
-                    1 Jogador
-                  </button>
-                  <button
-                    type="button"
-                    className={`selector-btn ${numJogadoresAzul === 2 ? 'active-azul' : ''}`}
-                    onClick={() => handleMudarNumJogadoresAzul(2)}
-                  >
-                    2 Jogadores
-                  </button>
-                </div>
-              </div>
-
               <div className="inputs-container">
                 <div className="input-group">
                   <label className="input-label">Nome do Jogador 1</label>
@@ -143,7 +146,7 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
                   </div>
                 </div>
 
-                {numJogadoresAzul === 2 && (
+                {numJogadores === 2 && (
                   <div className="input-group fade-in">
                     <label className="input-label">Nome do Jogador 2</label>
                     <div className="input-wrapper">
@@ -154,7 +157,7 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
                         placeholder="Ex: Maria"
                         value={jogadoresAzul[1]}
                         onChange={(e) => handleMudarNomeAzul(1, e.target.value)}
-                        required={numJogadoresAzul === 2}
+                        required={numJogadores === 2}
                       />
                     </div>
                   </div>
@@ -169,26 +172,6 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
             <div className="card-body">
               <div className="team-badge badge-verde">TIME VERDE</div>
               
-              <div className="player-count-selector">
-                <span className="selector-label">Jogadores:</span>
-                <div className="selector-buttons">
-                  <button
-                    type="button"
-                    className={`selector-btn ${numJogadoresVerde === 1 ? 'active-verde' : ''}`}
-                    onClick={() => handleMudarNumJogadoresVerde(1)}
-                  >
-                    1 Jogador
-                  </button>
-                  <button
-                    type="button"
-                    className={`selector-btn ${numJogadoresVerde === 2 ? 'active-verde' : ''}`}
-                    onClick={() => handleMudarNumJogadoresVerde(2)}
-                  >
-                    2 Jogadores
-                  </button>
-                </div>
-              </div>
-
               <div className="inputs-container">
                 <div className="input-group">
                   <label className="input-label">Nome do Jogador 1</label>
@@ -205,7 +188,7 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
                   </div>
                 </div>
 
-                {numJogadoresVerde === 2 && (
+                {numJogadores === 2 && (
                   <div className="input-group fade-in">
                     <label className="input-label">Nome do Jogador 2</label>
                     <div className="input-wrapper">
@@ -216,7 +199,7 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
                         placeholder="Ex: Ana"
                         value={jogadoresVerde[1]}
                         onChange={(e) => handleMudarNomeVerde(1, e.target.value)}
-                        required={numJogadoresVerde === 2}
+                        required={numJogadores === 2}
                       />
                     </div>
                   </div>
@@ -226,94 +209,97 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
           </div>
         </div>
 
-        {/* CARD CONFIGURAÇÕES DO JOGO (META) */}
-        <div className="glass-panel config-settings-card">
-          <div className="settings-header">
-            <Trophy className="settings-icon" size={22} />
-            <h2>Meta de Pontuação</h2>
-          </div>
-          
-          <div className="settings-body">
-            <p className="settings-desc">Selecione ou digite a pontuação necessária para vencer a partida:</p>
-            <div className="range-selector">
-              <input
-                type="range"
-                min="500"
-                max="10000"
-                step="500"
-                value={metaPontos}
-                onChange={(e) => setMetaPontos(Number(e.target.value))}
-                className="range-slider"
-              />
-              <div className="number-input-wrapper">
-                <input
-                  type="number"
-                  min="100"
-                  max="50000"
-                  value={metaPontos}
-                  onChange={(e) => setMetaPontos(Math.max(0, Number(e.target.value)))}
-                  className="input-field meta-number-input"
-                />
-                <span className="points-unit">pts</span>
-              </div>
+        {/* CONFIGURAÇÕES DO JOGO (META E VULNERABILIDADE) LADO A LADO */}
+        <div className="settings-grid">
+          {/* CARD CONFIGURAÇÕES DO JOGO (META) */}
+          <div className="glass-panel config-settings-card compact-card">
+            <div className="settings-header">
+              <Trophy className="settings-icon" size={20} />
+              <h2>Meta de Pontuação</h2>
             </div>
-            <div className="quick-meta-buttons">
-              {[1500, 3000, 5000, 10000].map((valor) => (
-                <button
-                  key={valor}
-                  type="button"
-                  className={`quick-meta-btn ${metaPontos === valor ? 'active' : ''}`}
-                  onClick={() => setMetaPontos(valor)}
-                >
-                  {valor.toLocaleString('pt-BR')} pts
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* CARD CONFIGURAÇÕES DO JOGO (VULNERABILIDADE) */}
-        <div className="glass-panel config-settings-card">
-          <div className="settings-header">
-            <AlertTriangle className="settings-icon text-danger" size={22} />
-            <h2>Vulnerabilidade</h2>
-          </div>
-          
-          <div className="settings-body">
-            <p className="settings-desc">Selecione a pontuação na qual o time ficará vulnerável (destacado com borda vermelha piscante e tag):</p>
-            <div className="range-selector">
-              <input
-                type="range"
-                min="500"
-                max="5000"
-                step="500"
-                value={vulnerabilidadePontos}
-                onChange={(e) => setVulnerabilidadePontos(Number(e.target.value))}
-                className="range-slider"
-              />
-              <div className="number-input-wrapper">
+            
+            <div className="settings-body">
+              <p className="settings-desc">Pontuação necessária para vencer a partida:</p>
+              <div className="range-selector">
                 <input
-                  type="number"
-                  min="100"
+                  type="range"
+                  min="500"
                   max="10000"
-                  value={vulnerabilidadePontos}
-                  onChange={(e) => setVulnerabilidadePontos(Math.max(0, Number(e.target.value)))}
-                  className="input-field meta-number-input"
+                  step="500"
+                  value={metaPontos}
+                  onChange={(e) => setMetaPontos(Number(e.target.value))}
+                  className="range-slider"
                 />
-                <span className="points-unit">pts</span>
+                <div className="number-input-wrapper">
+                  <input
+                    type="number"
+                    min="100"
+                    max="50000"
+                    value={metaPontos}
+                    onChange={(e) => setMetaPontos(Math.max(0, Number(e.target.value)))}
+                    className="input-field meta-number-input"
+                  />
+                  <span className="points-unit">pts</span>
+                </div>
+              </div>
+              <div className="quick-meta-buttons">
+                {[3000].map((valor) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    className={`quick-meta-btn ${metaPontos === valor ? 'active' : ''}`}
+                    onClick={() => setMetaPontos(valor)}
+                  >
+                    {valor.toLocaleString('pt-BR')} pts
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="quick-meta-buttons">
-              {[500, 1000, 1500, 2000].map((valor) => (
-                <button
-                  key={valor}
-                  type="button"
-                  className={`quick-meta-btn ${vulnerabilidadePontos === valor ? 'active' : ''}`}
-                  onClick={() => setVulnerabilidadePontos(valor)}
-                >
-                  {valor.toLocaleString('pt-BR')} pts
-                </button>
-              ))}
+          </div>
+
+          {/* CARD CONFIGURAÇÕES DO JOGO (VULNERABILIDADE) */}
+          <div className="glass-panel config-settings-card compact-card">
+            <div className="settings-header">
+              <AlertTriangle className="settings-icon text-danger" size={20} />
+              <h2>Vulnerabilidade</h2>
+            </div>
+            
+            <div className="settings-body">
+              <p className="settings-desc">Pontos para o time entrar em vulnerabilidade:</p>
+              <div className="range-selector">
+                <input
+                  type="range"
+                  min="500"
+                  max="5000"
+                  step="500"
+                  value={vulnerabilidadePontos}
+                  onChange={(e) => setVulnerabilidadePontos(Number(e.target.value))}
+                  className="range-slider"
+                />
+                <div className="number-input-wrapper">
+                  <input
+                    type="number"
+                    min="100"
+                    max="10000"
+                    value={vulnerabilidadePontos}
+                    onChange={(e) => setVulnerabilidadePontos(Math.max(0, Number(e.target.value)))}
+                    className="input-field meta-number-input"
+                  />
+                  <span className="points-unit">pts</span>
+                </div>
+              </div>
+              <div className="quick-meta-buttons">
+                {[1500].map((valor) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    className={`quick-meta-btn ${vulnerabilidadePontos === valor ? 'active' : ''}`}
+                    onClick={() => setVulnerabilidadePontos(valor)}
+                  >
+                    {valor.toLocaleString('pt-BR')} pts
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
