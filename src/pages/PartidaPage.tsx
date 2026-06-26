@@ -497,22 +497,66 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
       {/* MODAL COMEMORATIVO / ANÚNCIO DE VENCEDOR */}
       {status === 'finalizado' && vencedor && (
         <div className="modal-overlay">
+          {/* Confetes / Naipes Caindo no plano de fundo do modal */}
+          <div className="confetti-container">
+            {Array.from({ length: 60 }).map((_, idx) => {
+              const naipes = ['♠', '♥', '♦', '♣'];
+              const naipe = naipes[idx % 4];
+              const classeNaipe = idx % 2 === 0 ? 'red-suit' : 'blue-suit';
+              
+              const left = Math.random() * 100;
+              const animationDelay = Math.random() * 6;
+              const animationDuration = 4 + Math.random() * 5;
+              const size = 16 + Math.random() * 24;
+              const rotation = Math.random() * 360;
+              
+              return (
+                <span
+                  key={idx}
+                  className={`confetti-item ${classeNaipe}`}
+                  style={{
+                    left: `${left}%`,
+                    animationDelay: `${animationDelay}s`,
+                    animationDuration: `${animationDuration}s`,
+                    fontSize: `${size}px`,
+                    transform: `rotate(${rotation}deg)`,
+                  }}
+                >
+                  {naipe}
+                </span>
+              );
+            })}
+          </div>
+
           <div className="glass-panel modal-content winner-modal winner-glow">
             <div className={`card-header-accent ${vencedor === 'azul' ? 'bg-azul' : 'bg-verde'}`}></div>
             <div className="trophy-cup-wrapper">
               <Award className={`icon-winner-${vencedor}`} size={64} />
+              {/* Estrelas cintilantes */}
+              <div className="sparkle sparkle-1">★</div>
+              <div className="sparkle sparkle-2">✦</div>
+              <div className="sparkle sparkle-3">★</div>
+              <div className="sparkle sparkle-4">✦</div>
             </div>
             
-            <h2 className="winner-title text-center">Temos um Vencedor!</h2>
+            <h3 className="winner-subtitle text-center">PARABÉNS!</h3>
+            <h2 className="winner-title text-center">TEMOS UM VENCEDOR!</h2>
             
-            <div className={`winner-team-name text-center text-${vencedor}`}>
+            {/* Nomes da Equipe em Destaque Gigante */}
+            <div className={`winner-team-name-giant text-center text-${vencedor}`}>
               {vencedor === 'azul' ? nomeAzulExibicao : nomeVerdeExibicao}
             </div>
 
-            <div className="winner-details text-center">
-              <p className="points-celebration">
-                Pontuação Final: <strong className={`text-${vencedor}`}>{vencedor === 'azul' ? timeAzul.pontuacaoTotal : timeVerde.pontuacaoTotal} pts</strong>
-              </p>
+            {/* Pontuação do Vencedor em Destaque Gigante */}
+            <div className="winner-score-giant-wrapper text-center">
+              <span className="winner-score-label">PONTUAÇÃO FINAL</span>
+              <div className={`winner-score-giant-value text-${vencedor}`}>
+                {vencedor === 'azul' ? timeAzul.pontuacaoTotal : timeVerde.pontuacaoTotal}
+                <span className="winner-score-pts"> PTS</span>
+              </div>
+            </div>
+
+            <div className="winner-details-compact text-center">
               <p className="meta-info">
                 Meta de pontos superada ({metaPontos} pts) em {rodadas.length} rodadas.
               </p>
