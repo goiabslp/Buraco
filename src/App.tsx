@@ -34,7 +34,20 @@ const ESTADO_INICIAL: JogoEstado = {
   pontosTemporariosVerde: null,
 };
 
+export interface PartidaSalva {
+  id: string;
+  data: string;
+  timeAzul: Equipe;
+  timeVerde: Equipe;
+  rodadas: Rodada[];
+  metaPontos: number;
+  pontosVulnerabilidade: number;
+  status: 'jogando' | 'finalizado';
+  vencedor: 'azul' | 'verde' | null;
+}
+
 interface JogoEstado {
+  id?: string;
   timeAzul: Equipe;
   timeVerde: Equipe;
   rodadas: Rodada[];
@@ -69,6 +82,67 @@ function App() {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(estado));
   }, [estado]);
 
+  // Chave do LocalStorage para histórico de partidas recentes
+  const RECENTES_STORAGE_KEY = 'buraco_partidas_recentes';
+
+  // Salva ou atualiza a partida atual no histórico de partidas recentes (mantém as últimas 3)
+  useEffect(() => {
+    if (estado.status !== 'config' && estado.id) {
+      const salvasRaw = localStorage.getItem(RECENTES_STORAGE_KEY);
+      let salvas: PartidaSalva[] = [];
+      if (salvasRaw) {
+        try {
+          salvas = JSON.parse(salvasRaw);
+        } catch (e) {
+          console.error('Erro ao ler partidas recentes', e);
+        }
+      }
+
+      const index = salvas.findIndex((p) => p.id === estado.id);
+      
+      const partidaDados: PartidaSalva = {
+        id: estado.id,
+        data: salvas[index]?.data || new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        timeAzul: estado.timeAzul,
+        timeVerde: estado.timeVerde,
+        rodadas: estado.rodadas,
+        metaPontos: estado.metaPontos,
+        pontosVulnerabilidade: estado.pontosVulnerabilidade,
+        status: estado.status,
+        vencedor: estado.vencedor
+      };
+
+      if (index !== -1) {
+        // Se a partida mudou de posição no array, remove e recoloca no topo
+        salvas.splice(index, 1);
+      }
+      
+      // Sempre coloca a partida mais recentemente atualizada no topo
+      salvas.unshift(partidaDados);
+
+      // Mantém no máximo 3 partidas
+      salvas = salvas.slice(0, 3);
+
+      localStorage.setItem(RECENTES_STORAGE_KEY, JSON.stringify(salvas));
+    }
+  }, [estado]);
+
+  // Carregar uma partida para continuar ou acessar
+  const carregarPartida = (partida: PartidaSalva) => {
+    setEstado({
+      id: partida.id,
+      timeAzul: partida.timeAzul,
+      timeVerde: partida.timeVerde,
+      rodadas: partida.rodadas,
+      metaPontos: partida.metaPontos,
+      pontosVulnerabilidade: partida.pontosVulnerabilidade,
+      status: partida.status,
+      vencedor: partida.vencedor,
+      pontosTemporariosAzul: null,
+      pontosTemporariosVerde: null,
+    });
+  };
+
   // Redirecionamento baseado no status do jogo (ao montar ou se o status mudar)
   useEffect(() => {
     if (estado.status === 'config') {
@@ -80,6 +154,7 @@ function App() {
 
   // Iniciar Partida
   const iniciarPartida = (jogadoresAzul: string[], jogadoresVerde: string[], meta: number, vulnerabilidade: number) => {
+    const id = Date.now().toString();
     const timeAzul: Equipe = {
       jogadores: jogadoresAzul.map(nome => ({ nome })),
       pontuacaoTotal: 0,
@@ -90,6 +165,7 @@ function App() {
     };
 
     setEstado({
+      id,
       timeAzul,
       timeVerde,
       rodadas: [],
@@ -238,7 +314,7 @@ function App() {
       <Routes>
         <Route 
           path="/" 
-          element={<ConfigPage onIniciar={iniciarPartida} />} 
+          element={<ConfigPage onIniciar={iniciarPartida} onCarregarPartida={carregarPartida} />} 
         />
         <Route 
           path="/partida" 

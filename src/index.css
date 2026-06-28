@@ -1777,3 +1777,109 @@ body {
   transform: translateY(-3px) !important;
   box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5) !important;
 }
+
+/* Partidas Recentes na Configuração */
+.recent-matches-card {
+  margin-top: 1.5rem;
+}
+
+.recent-matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.recent-match-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-smooth);
+}
+
+.recent-match-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.recent-match-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.recent-match-teams {
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.team-blue-text {
+  color: var(--time-azul-hover);
+}
+
+.team-green-text {
+  color: var(--time-verde-hover);
+}
+
+.vs-divider {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.recent-match-details {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.recent-match-score {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.recent-match-status-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.recent-match-status-tag.status-finished {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.recent-match-status-tag.status-ongoing {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--time-verde-hover);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  animation: pulseOpacity 2s infinite ease-in-out;
+}
+
+@media (max-width: 600px) {
+  .recent-match-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+  
+  .recent-match-item button {
+    width: 100%;
+  }
+}

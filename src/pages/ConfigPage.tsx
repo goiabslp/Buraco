@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { User, Play, Trophy, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Play, Trophy, AlertTriangle, RotateCcw } from 'lucide-react';
+import type { PartidaSalva } from '../App';
 
 interface ConfigPageProps {
   onIniciar: (jogadoresAzul: string[], jogadoresVerde: string[], meta: number, vulnerabilidade: number) => void;
+  onCarregarPartida: (partida: PartidaSalva) => void;
 }
 
-export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
+export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar, onCarregarPartida }) => {
   // Configuração da quantidade de jogadores por equipe (Geral)
   const [numJogadores, setNumJogadores] = useState<1 | 2>(2);
   
@@ -19,6 +21,20 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
   const [metaPontos, setMetaPontos] = useState<number>(3000);
   // Vulnerabilidade
   const [vulnerabilidadePontos, setVulnerabilidadePontos] = useState<number>(1500);
+
+  // Partidas recentes salvas localmente
+  const [partidasSalvas, setPartidasSalvas] = useState<PartidaSalva[]>([]);
+
+  useEffect(() => {
+    const salvasRaw = localStorage.getItem('buraco_partidas_recentes');
+    if (salvasRaw) {
+      try {
+        setPartidasSalvas(JSON.parse(salvasRaw));
+      } catch (e) {
+        console.error('Erro ao ler partidas recentes', e);
+      }
+    }
+  }, []);
 
   const handleMudarNumJogadores = (num: 1 | 2) => {
     setNumJogadores(num);
@@ -311,6 +327,51 @@ export const ConfigPage: React.FC<ConfigPageProps> = ({ onIniciar }) => {
           </button>
         </div>
       </form>
+
+      {/* PARTIDAS RECENTES */}
+      {partidasSalvas.length > 0 && (
+        <div className="glass-panel config-settings-card recent-matches-card">
+          <div className="settings-header">
+            <RotateCcw className="settings-icon text-muted" size={22} />
+            <h2>Partidas Recentes</h2>
+          </div>
+          <div className="settings-body recent-matches-list">
+            {partidasSalvas.map((p) => {
+              const nomesAzul = p.timeAzul.jogadores.map(j => j.nome).join(' / ');
+              const nomesVerde = p.timeVerde.jogadores.map(j => j.nome).join(' / ');
+              const finalizada = p.status === 'finalizado';
+
+              return (
+                <div key={p.id} className="recent-match-item">
+                  <div className="recent-match-info">
+                    <div className="recent-match-teams">
+                      <span className="team-blue-text">{nomesAzul}</span>
+                      <span className="vs-divider">VS</span>
+                      <span className="team-green-text">{nomesVerde}</span>
+                    </div>
+                    <div className="recent-match-details">
+                      <span className="recent-match-score">
+                        {p.timeAzul.pontuacaoTotal} pts vs {p.timeVerde.pontuacaoTotal} pts
+                      </span>
+                      <span className="recent-match-date">{p.data}</span>
+                      <span className={`recent-match-status-tag ${finalizada ? 'status-finished' : 'status-ongoing'}`}>
+                        {finalizada ? 'Finalizada' : 'Em Andamento'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${finalizada ? 'btn-secondary' : 'btn-primary'}`}
+                    onClick={() => onCarregarPartida(p)}
+                  >
+                    {finalizada ? 'Acessar Partida' : 'Continuar Partida'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
