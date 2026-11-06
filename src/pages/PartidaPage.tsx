@@ -10,8 +10,8 @@ interface PartidaPageProps {
   pontosVulnerabilidade: number;
   status: 'jogando' | 'finalizado';
   vencedor: 'azul' | 'verde' | null;
-  pontosTemporariosAzul: number | null;
-  pontosTemporariosVerde: number | null;
+  pontosTemporariosAzul: number[];
+  pontosTemporariosVerde: number[];
   onLancarPontos: (time: 'azul' | 'verde', pontos: number) => void;
   onConfirmarRodada: () => void;
   onDesfazer: () => void;
@@ -47,11 +47,22 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
   const [animarAzul, setAnimarAzul] = useState(false);
   const [animarVerde, setAnimarVerde] = useState(false);
 
+  // Verificação de avanço: cada equipe deve adicionar 2x os pontos na mesma rodada
+  const azulCompleto = pontosTemporariosAzul.length === 2;
+  const verdeCompleto = pontosTemporariosVerde.length === 2;
+  const temAmbosLancamentos = azulCompleto && verdeCompleto;
+
+  const formatarLancamentos = (pontos: number[]) => {
+    if (pontos.length < 2) return '';
+    const [p1, p2] = pontos;
+    const sinal = p2 >= 0 ? `+ ${p2}` : `- ${Math.abs(p2)}`;
+    return `${p1} ${sinal}`;
+  };
+
   // Verificação de Vulnerabilidade com fallback de segurança (equipe atingiu ou superou o limite)
   const limiteVulnerabilidade = pontosVulnerabilidade || 1500;
   const azulVulneravel = timeAzul.pontuacaoTotal >= limiteVulnerabilidade;
   const verdeVulneravel = timeVerde.pontuacaoTotal >= limiteVulnerabilidade;
-  const temAmbosLancamentos = pontosTemporariosAzul !== null && pontosTemporariosVerde !== null;
 
   // Efeito para disparar animação de alteração do total do Time Azul
   useEffect(() => {
@@ -295,17 +306,21 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
             
             {/* Indicador de Lançamento na rodada */}
             <div className="round-status-box">
-              {pontosTemporariosAzul !== null ? (
+              {pontosTemporariosAzul.length === 0 ? (
+                <div className="status-pending">Aguardando lançamentos (0/2)...</div>
+              ) : pontosTemporariosAzul.length === 1 ? (
                 <div className="status-launched-azul">
-                  <CheckCircle2 size={16} /> Lançado: <span>{pontosTemporariosAzul} pts</span>
+                  <CheckCircle2 size={16} /> 1º Lançamento: <span>{pontosTemporariosAzul[0]} pts</span>
                 </div>
               ) : (
-                <div className="status-pending">Aguardando lançamento...</div>
+                <div className="status-launched-azul">
+                  <CheckCircle2 size={16} /> Lançado: <span>{pontosTemporariosAzul[0] + pontosTemporariosAzul[1]} pts</span> ({formatarLancamentos(pontosTemporariosAzul)})
+                </div>
               )}
             </div>
 
             <div className="control-buttons">
-              {!temAmbosLancamentos && (
+              {!azulCompleto && (
                 <>
                   <button 
                     type="button" 
@@ -313,7 +328,7 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
                     onClick={() => abrirModalPontuacao('azul')}
                     disabled={status === 'finalizado'}
                   >
-                    <Plus size={18} /> Adicionar Pontos
+                    <Plus size={18} /> {pontosTemporariosAzul.length === 1 ? 'Adicionar 2º Ponto' : 'Adicionar Pontos'}
                   </button>
                   
                   <button 
@@ -327,7 +342,7 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
                 </>
               )}
 
-              {pontosTemporariosAzul !== null && (
+              {pontosTemporariosAzul.length > 0 && (
                 <button
                   type="button"
                   className="btn btn-danger-outline"
@@ -351,17 +366,21 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
 
             {/* Indicador de Lançamento na rodada */}
             <div className="round-status-box">
-              {pontosTemporariosVerde !== null ? (
+              {pontosTemporariosVerde.length === 0 ? (
+                <div className="status-pending">Aguardando lançamentos (0/2)...</div>
+              ) : pontosTemporariosVerde.length === 1 ? (
                 <div className="status-launched-verde">
-                  <CheckCircle2 size={16} /> Lançado: <span>{pontosTemporariosVerde} pts</span>
+                  <CheckCircle2 size={16} /> 1º Lançamento: <span>{pontosTemporariosVerde[0]} pts</span>
                 </div>
               ) : (
-                <div className="status-pending">Aguardando lançamento...</div>
+                <div className="status-launched-verde">
+                  <CheckCircle2 size={16} /> Lançado: <span>{pontosTemporariosVerde[0] + pontosTemporariosVerde[1]} pts</span> ({formatarLancamentos(pontosTemporariosVerde)})
+                </div>
               )}
             </div>
 
             <div className="control-buttons">
-              {!temAmbosLancamentos && (
+              {!verdeCompleto && (
                 <>
                   <button 
                     type="button" 
@@ -369,7 +388,7 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
                     onClick={() => abrirModalPontuacao('verde')}
                     disabled={status === 'finalizado'}
                   >
-                    <Plus size={18} /> Adicionar Pontos
+                    <Plus size={18} /> {pontosTemporariosVerde.length === 1 ? 'Adicionar 2º Ponto' : 'Adicionar Pontos'}
                   </button>
                   
                   <button 
@@ -383,7 +402,7 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
                 </>
               )}
 
-              {pontosTemporariosVerde !== null && (
+              {pontosTemporariosVerde.length > 0 && (
                 <button
                   type="button"
                   className="btn btn-danger-outline"
@@ -422,7 +441,7 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
               type="button" 
               className="btn btn-secondary btn-sm"
               onClick={onDesfazer}
-              disabled={rodadas.length === 0 && pontosTemporariosAzul === null && pontosTemporariosVerde === null}
+              disabled={rodadas.length === 0 && pontosTemporariosAzul.length === 0 && pontosTemporariosVerde.length === 0}
               title="Desfazer último lançamento ou rodada"
             >
               <Undo2 size={16} /> Desfazer
@@ -446,7 +465,7 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
           <div className="glass-panel modal-content">
             <div className={`card-header-accent ${modalTime === 'azul' ? 'bg-azul' : 'bg-verde'}`}></div>
             <h3 className="modal-title">
-              Rodada {rodadaAtual}
+              Rodada {rodadaAtual} {modalTime && `• ${(modalTime === 'azul' ? pontosTemporariosAzul.length : pontosTemporariosVerde.length) + 1}º Lançamento`}
             </h3>
             <div className={`modal-players-highlight text-${modalTime}`}>
               {modalTime === 'azul' ? nomeAzulExibicao : nomeVerdeExibicao}

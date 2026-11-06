@@ -22,6 +22,16 @@ export interface Rodada {
 
 const LOCAL_STORAGE_KEY = 'buraco_score_app_state';
 
+const normalizarPontosTemp = (val: unknown): number[] => {
+  if (Array.isArray(val)) {
+    return val.filter((x): x is number => typeof x === 'number');
+  }
+  if (typeof val === 'number') {
+    return [val];
+  }
+  return [];
+};
+
 const ESTADO_INICIAL: JogoEstado = {
   timeAzul: { jogadores: [], pontuacaoTotal: 0 },
   timeVerde: { jogadores: [], pontuacaoTotal: 0 },
@@ -30,8 +40,9 @@ const ESTADO_INICIAL: JogoEstado = {
   pontosVulnerabilidade: 1500,
   status: 'config',
   vencedor: null,
-  pontosTemporariosAzul: null,
-  pontosTemporariosVerde: null,
+  pontosTemporariosAzul: [],
+  pontosTemporariosVerde: [],
+  ordemLancamentos: [],
 };
 
 export interface PartidaSalva {
@@ -55,8 +66,9 @@ interface JogoEstado {
   pontosVulnerabilidade: number;
   status: 'config' | 'jogando' | 'finalizado';
   vencedor: 'azul' | 'verde' | null;
-  pontosTemporariosAzul: number | null;
-  pontosTemporariosVerde: number | null;
+  pontosTemporariosAzul: number[];
+  pontosTemporariosVerde: number[];
+  ordemLancamentos?: Array<'azul' | 'verde'>;
 }
 
 function App() {
@@ -68,7 +80,10 @@ function App() {
         const parsed = JSON.parse(salvo);
         return {
           ...ESTADO_INICIAL,
-          ...parsed
+          ...parsed,
+          pontosTemporariosAzul: normalizarPontosTemp(parsed.pontosTemporariosAzul),
+          pontosTemporariosVerde: normalizarPontosTemp(parsed.pontosTemporariosVerde),
+          ordemLancamentos: Array.isArray(parsed.ordemLancamentos) ? parsed.ordemLancamentos : [],
         };
       } catch (e) {
         console.error('Erro ao ler estado do LocalStorage', e);
@@ -138,8 +153,9 @@ function App() {
       pontosVulnerabilidade: partida.pontosVulnerabilidade,
       status: partida.status,
       vencedor: partida.vencedor,
-      pontosTemporariosAzul: null,
-      pontosTemporariosVerde: null,
+      pontosTemporariosAzul: [],
+      pontosTemporariosVerde: [],
+      ordemLancamentos: [],
     });
   };
 
@@ -150,7 +166,7 @@ function App() {
     } else {
       navigate('/partida');
     }
-  }, [estado.status]);
+  }, [estado.status, navigate]);
 
   // Iniciar Partida
   const iniciarPartida = (jogadoresAzul: string[], jogadoresVerde: string[], meta: number, vulnerabilidade: number) => {
@@ -173,39 +189,47 @@ function App() {
       pontosVulnerabilidade: vulnerabilidade,
       status: 'jogando',
       vencedor: null,
-      pontosTemporariosAzul: null,
-      pontosTemporariosVerde: null,
+      pontosTemporariosAzul: [],
+      pontosTemporariosVerde: [],
+      ordemLancamentos: [],
     });
   };
-  // Lançar pontuação temporária de um time
+
+  // Lançar pontuação de um time (permite até 2 lançamentos por rodada para cada equipe)
   const lancarPontos = (time: 'azul' | 'verde', pontos: number) => {
     setEstado((prev) => {
       if (prev.status === 'finalizado') return prev;
 
+      const atuais = time === 'azul' ? prev.pontosTemporariosAzul : prev.pontosTemporariosVerde;
+      if (atuais.length >= 2) return prev;
+
+      const novos = [...atuais, pontos];
+
       return {
         ...prev,
-        pontosTemporariosAzul: time === 'azul' ? pontos : prev.pontosTemporariosAzul,
-        pontosTemporariosVerde: time === 'verde' ? pontos : prev.pontosTemporariosVerde,
+        pontosTemporariosAzul: time === 'azul' ? novos : prev.pontosTemporariosAzul,
+        pontosTemporariosVerde: time === 'verde' ? novos : prev.pontosTemporariosVerde,
+        ordemLancamentos: [...(prev.ordemLancamentos || []), time],
       };
     });
   };
 
-  // Confirmar e computar a rodada finalizada
+  // Confirmar e computar a rodada finalizada (só avança quando cada equipe adicionar 2x os pontos)
   const confirmarRodada = () => {
     setEstado((prev) => {
       if (prev.status === 'finalizado') return prev;
-      if (prev.pontosTemporariosAzul === null || prev.pontosTemporariosVerde === null) return prev;
+      if (prev.pontosTemporariosAzul.length < 2 || prev.pontosTemporariosVerde.length < 2) return prev;
 
-      const novoTempAzul = prev.pontosTemporariosAzul;
-      const novoTempVerde = prev.pontosTemporariosVerde;
+      const somaAzul = prev.pontosTemporariosAzul.reduce((acc, val) => acc + val, 0);
+      const somaVerde = prev.pontosTemporariosVerde.reduce((acc, val) => acc + val, 0);
 
-      const acumuladoAzul = prev.timeAzul.pontuacaoTotal + novoTempAzul;
-      const acumuladoVerde = prev.timeVerde.pontuacaoTotal + novoTempVerde;
+      const acumuladoAzul = prev.timeAzul.pontuacaoTotal + somaAzul;
+      const acumuladoVerde = prev.timeVerde.pontuacaoTotal + somaVerde;
 
       const novaRodada: Rodada = {
         numero: prev.rodadas.length + 1,
-        pontosAzul: novoTempAzul,
-        pontosVerde: novoTempVerde,
+        pontosAzul: somaAzul,
+        pontosVerde: somaVerde,
         acumuladoAzul,
         acumuladoVerde,
       };
@@ -244,22 +268,43 @@ function App() {
         timeAzul: { ...prev.timeAzul, pontuacaoTotal: acumuladoAzul },
         timeVerde: { ...prev.timeVerde, pontuacaoTotal: acumuladoVerde },
         rodadas: novasRodadas,
-        pontosTemporariosAzul: null,
-        pontosTemporariosVerde: null,
+        pontosTemporariosAzul: [],
+        pontosTemporariosVerde: [],
+        ordemLancamentos: [],
         status,
         vencedor,
       };
     });
   };
-  // Desfazer última ação (pode ser um lançamento temporário ou a última rodada completa)
+
+  // Desfazer última ação (desfaz o último lançamento temporário feito ou a última rodada finalizada)
   const desfazerUltimaAcao = () => {
     setEstado((prev) => {
-      // 1. Se há lançamentos temporários na rodada atual, limpa-os
-      if (prev.pontosTemporariosAzul !== null || prev.pontosTemporariosVerde !== null) {
+      // 1. Se há lançamentos temporários na ordem, desfaz o mais recente
+      const ordem = prev.ordemLancamentos || [];
+      if (ordem.length > 0) {
+        const ultimoTime = ordem[ordem.length - 1];
+        const novaOrdem = ordem.slice(0, -1);
+
         return {
           ...prev,
-          pontosTemporariosAzul: null,
-          pontosTemporariosVerde: null,
+          pontosTemporariosAzul: ultimoTime === 'azul' 
+            ? prev.pontosTemporariosAzul.slice(0, -1) 
+            : prev.pontosTemporariosAzul,
+          pontosTemporariosVerde: ultimoTime === 'verde' 
+            ? prev.pontosTemporariosVerde.slice(0, -1) 
+            : prev.pontosTemporariosVerde,
+          ordemLancamentos: novaOrdem,
+        };
+      }
+
+      // 1.1 Se há pontos temporários sem registro de ordem (ex: legado), limpa todos
+      if (prev.pontosTemporariosAzul.length > 0 || prev.pontosTemporariosVerde.length > 0) {
+        return {
+          ...prev,
+          pontosTemporariosAzul: [],
+          pontosTemporariosVerde: [],
+          ordemLancamentos: [],
         };
       }
 
@@ -278,8 +323,9 @@ function App() {
           rodadas: novasRodadas,
           status: 'jogando', // Retorna ao jogo se estava finalizado
           vencedor: null,
-          pontosTemporariosAzul: null,
-          pontosTemporariosVerde: null,
+          pontosTemporariosAzul: [],
+          pontosTemporariosVerde: [],
+          ordemLancamentos: [],
         };
       }
 
@@ -292,13 +338,14 @@ function App() {
     setEstado(ESTADO_INICIAL);
   };
 
-  // Limpar lançamento temporário de um time específico
+  // Limpar lançamentos temporários de um time específico
   const limparPontosTemporarios = (time: 'azul' | 'verde') => {
     setEstado((prev) => {
+      const novaOrdem = (prev.ordemLancamentos || []).filter(t => t !== time);
       if (time === 'azul') {
-        return { ...prev, pontosTemporariosAzul: null };
+        return { ...prev, pontosTemporariosAzul: [], ordemLancamentos: novaOrdem };
       } else {
-        return { ...prev, pontosTemporariosVerde: null };
+        return { ...prev, pontosTemporariosVerde: [], ordemLancamentos: novaOrdem };
       }
     });
   };
