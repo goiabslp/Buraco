@@ -273,24 +273,24 @@ export const PartidaPage: React.FC<PartidaPageProps> = ({
         <div className="scoreboard-grid">
           {/* Time Azul */}
           <div className={`score-team-panel panel-azul ${azulVulneravel ? 'vulneravel-active' : ''}`}>
-            {azulVulneravel && <span className="tag-vulneravel">VULNERÁVEL</span>}
             <h2 className="team-names text-azul">{nomeAzulExibicao}</h2>
             <div className={`score-display text-azul ${animarAzul ? 'score-change' : ''}`}>
               {timeAzul.pontuacaoTotal}
             </div>
             <div className="team-indicator indicator-azul"></div>
+            {azulVulneravel && <span className="tag-vulneravel">VULNERÁVEL</span>}
           </div>
 
           <div className="scoreboard-vs">VS</div>
 
           {/* Time Verde */}
           <div className={`score-team-panel panel-verde ${verdeVulneravel ? 'vulneravel-active' : ''}`}>
-            {verdeVulneravel && <span className="tag-vulneravel">VULNERÁVEL</span>}
             <h2 className="team-names text-verde">{nomeVerdeExibicao}</h2>
             <div className={`score-display text-verde ${animarVerde ? 'score-change' : ''}`}>
               {timeVerde.pontuacaoTotal}
             </div>
             <div className="team-indicator indicator-verde"></div>
+            {verdeVulneravel && <span className="tag-vulneravel">VULNERÁVEL</span>}
           </div>
         </div>
       </header>
